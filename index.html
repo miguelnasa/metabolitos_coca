@@ -20,7 +20,7 @@
       height: 100vh;
     }
 
-    /* Columna izquierda: lista de metabolitos */
+    /* Columna izquierda */
     .sidebar {
       width: 30%;
       min-width: 260px;
@@ -41,53 +41,90 @@
       color: #555;
     }
 
-    .metabolite-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+    /* Grid de iconos de metabolitos */
+    .metabolite-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 8px;
     }
 
-    .metabolite-item {
-      padding: 8px 10px;
-      margin-bottom: 4px;
-      border-radius: 6px;
-      cursor: pointer;
+    .metabolite-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      background: #f3f4ff;
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 0.95rem;
-      transition: background 0.15s, transform 0.05s;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.1s, box-shadow 0.15s, background 0.15s;
     }
 
-    .metabolite-item:hover {
-      background: #f0f3ff;
-      transform: translateX(2px);
+    .metabolite-icon:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(15,23,42,0.12);
+      background: #e5e7ff;
     }
 
-    .metabolite-item.active {
+    .metabolite-icon.active {
+      box-shadow: 0 0 0 2px #4f46e5;
       background: #dde4ff;
-      font-weight: 600;
     }
 
-    .chip {
-      width: 10px;
-      height: 10px;
+    .metabolite-icon .chip {
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
-      flex-shrink: 0;
+    }
+
+    .metabolite-initials {
+      position: absolute;
+      bottom: 5px;
+      right: 6px;
+      font-size: 0.6rem;
+      color: #374151;
+      font-weight: 600;
+      opacity: 0.85;
+    }
+
+    /* Tooltip con nombre completo */
+    .metabolite-icon::after {
+      content: attr(data-name);
+      position: absolute;
+      left: 50%;
+      bottom: 100%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      background: #111827;
+      color: #f9fafb;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s, transform 0.15s;
+      transform-origin: bottom center;
+      z-index: 10;
+    }
+
+    .metabolite-icon:hover::after {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-4px);
     }
 
     /* Colores por categoría */
+    .chip {
+      flex-shrink: 0;
+    }
+
     .cat-beneficio { background: #2eae5c; }    /* posible actividad farmacológica */
     .cat-farma     { background: #f29f3d; }    /* actividad farmacológica clara */
     .cat-toxico    { background: #e55252; }    /* tóxico */
     .cat-extra     { background: #9ea4b3; }    /* contaminante, marcador, uso industrial */
 
-    .category-label {
-      font-size: 0.75rem;
-      opacity: 0.8;
-    }
-
-    /* Panel derecho: cuerpo y efecto */
+    /* Panel derecho */
     .main {
       flex: 1;
       display: flex;
@@ -117,6 +154,8 @@
       gap: 10px;
       font-size: 0.75rem;
       color: #555;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .legend-item {
@@ -133,72 +172,18 @@
       justify-content: center;
     }
 
-    /* Silueta del cuerpo (simple, con CSS) */
+    /* Contenedor del cuerpo con imagen de fondo */
     .body-container {
       position: relative;
       width: 260px;
-      height: 420px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      height: 460px;
+      background-image: url("cuerpo_sistemas_vertical.png");
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
     }
 
-    .body-silhouette {
-      position: relative;
-      width: 110px;
-      height: 260px;
-      background: #e8ecf5;
-      border-radius: 50px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 30px;
-    }
-
-    .body-head {
-      position: absolute;
-      top: -60px;
-      width: 70px;
-      height: 70px;
-      background: #e8ecf5;
-      border-radius: 50%;
-    }
-
-    .body-arm {
-      position: absolute;
-      top: 70px;
-      width: 40px;
-      height: 90px;
-      background: #e8ecf5;
-      border-radius: 50px;
-    }
-
-    .body-arm.left {
-      left: -35px;
-    }
-
-    .body-arm.right {
-      right: -35px;
-    }
-
-    .body-leg {
-      position: absolute;
-      bottom: -80px;
-      width: 36px;
-      height: 80px;
-      background: #e8ecf5;
-      border-radius: 50px;
-    }
-
-    .body-leg.left {
-      left: 10px;
-    }
-
-    .body-leg.right {
-      right: 10px;
-    }
-
-    /* Zonas anatómicas (para destacar según el efecto) */
+    /* Zonas anatómicas sobre la imagen */
     .zone {
       position: absolute;
       border-radius: 50%;
@@ -207,19 +192,60 @@
       pointer-events: none;
     }
 
-    .zone-head    { top: -45px; left: 50%; transform: translateX(-50%); width: 65px; height: 65px; }
-    .zone-heart   { top: 65px; left: 50%; transform: translateX(-50%); width: 40px; height: 40px; }
-    .zone-liver   { top: 120px; left: 58%; width: 45px; height: 40px; }
-    .zone-torso   { top: 90px; left: 50%; transform: translateX(-50%); width: 75px; height: 80px; }
-    .zone-abdomen { top: 150px; left: 50%; transform: translateX(-50%); width: 60px; height: 60px; }
-    .zone-chest   { top: 110px; left: 50%; transform: translateX(-50%); width: 70px; height: 60px; }
+    .zone-head {
+      left: 50%;
+      top: 8%;
+      transform: translate(-50%, -50%);
+      width: 18%;
+      height: 14%;
+    }
+
+    .zone-heart {
+      left: 55%;
+      top: 25%;
+      transform: translate(-50%, -50%);
+      width: 14%;
+      height: 10%;
+    }
+
+    .zone-liver {
+      left: 45%;
+      top: 33%;
+      transform: translate(-50%, -50%);
+      width: 16%;
+      height: 9%;
+    }
+
+    .zone-torso {
+      left: 50%;
+      top: 38%;
+      transform: translate(-50%, -50%);
+      width: 30%;
+      height: 22%;
+    }
+
+    .zone-abdomen {
+      left: 50%;
+      top: 48%;
+      transform: translate(-50%, -50%);
+      width: 25%;
+      height: 16%;
+    }
+
+    .zone-chest {
+      left: 50%;
+      top: 29%;
+      transform: translate(-50%, -50%);
+      width: 28%;
+      height: 16%;
+    }
 
     .zone.active {
       border-color: #4f46e5;
       box-shadow: 0 0 12px rgba(79,70,229,0.55);
     }
 
-    /* Panel de texto del efecto */
+    /* Panel de texto */
     .effect-panel {
       max-width: 420px;
       padding: 16px 18px;
@@ -252,7 +278,7 @@
       color: #777;
     }
 
-    @media (max-width: 800px) {
+    @media (max-width: 900px) {
       .app {
         flex-direction: column;
       }
@@ -264,7 +290,6 @@
         height: 55vh;
       }
       .content {
-        flex-direction: row;
         gap: 12px;
       }
       .body-container {
@@ -277,9 +302,9 @@
   <div class="app">
     <!-- Columna izquierda -->
     <aside class="sidebar">
-      <h1>Metabolitos</h1>
+      <h1>Metabolitos de la coca</h1>
       <p>Haz clic sobre un metabolito para ver dónde actúa y qué efecto tiene en el cuerpo.</p>
-      <ul id="metaboliteList" class="metabolite-list"></ul>
+      <div id="metaboliteGrid" class="metabolite-grid"></div>
     </aside>
 
     <!-- Panel derecho -->
@@ -289,34 +314,11 @@
           <div class="header-title">Efecto en el cuerpo</div>
           <div class="header-subtitle">Visualización simplificada con zonas anatómicas</div>
         </div>
-        <div class="legend">
-          <div class="legend-item">
-            <span class="chip cat-farma"></span><span>Actividad farmacológica</span>
-          </div>
-          <div class="legend-item">
-            <span class="chip cat-beneficio"></span><span>Posible beneficio</span>
-          </div>
-          <div class="legend-item">
-            <span class="chip cat-toxico"></span><span>Tóxico / Riesgo alto</span>
-          </div>
-          <div class="legend-item">
-            <span class="chip cat-extra"></span><span>Contaminante / Marcador</span>
-          </div>
-        </div>
       </div>
 
       <div class="content">
         <!-- Cuerpo -->
         <div class="body-container">
-          <div class="body-silhouette">
-            <div class="body-head"></div>
-            <div class="body-arm left"></div>
-            <div class="body-arm right"></div>
-            <div class="body-leg left"></div>
-            <div class="body-leg right"></div>
-          </div>
-
-          <!-- Zonas anatómicas -->
           <div id="zone-head" class="zone zone-head"></div>
           <div id="zone-heart" class="zone zone-heart"></div>
           <div id="zone-liver" class="zone zone-liver"></div>
@@ -334,7 +336,9 @@
             Categoría: —
           </div>
           <div id="effectText" class="effect-text">
-            En la columna izquierda tienes la lista completa de metabolitos. Al hacer clic en uno, verás aquí su efecto principal explicado en lenguaje sencillo y se resaltará la zona del cuerpo relacionada.
+            En la columna izquierda tienes la lista completa de metabolitos. 
+            Al hacer clic en uno, verás aquí su efecto principal explicado en lenguaje sencillo 
+            y se resaltará la zona del cuerpo relacionada.
           </div>
           <div class="effect-hint">
             Esta visualización es simplificada y no sustituye información clínica detallada.
@@ -345,7 +349,7 @@
   </div>
 
   <script>
-    // Datos de metabolitos (simplificados y en español llano).[file:1]
+    // Datos de metabolitos (a partir de la tabla).[file:1]
     const metabolitos = [
       {
         nombre: "Cocaína",
@@ -443,7 +447,7 @@
         categoria: "Compuesto con posible actividad farmacológica",
         efecto: "Puede bajar la presión arterial al dilatar las arterias.",
         categoriaColor: "cat-beneficio",
-        zonas: ["heart"]
+	zonas: ["heart"]
       },
       {
         nombre: "Tricina",
@@ -524,7 +528,7 @@
       }
     ];
 
-    const listEl = document.getElementById("metaboliteList");
+    const gridEl = document.getElementById("metaboliteGrid");
     const effectNameEl = document.getElementById("effectName");
     const effectCategoryEl = document.getElementById("effectCategory");
     const effectTextEl = document.getElementById("effectText");
@@ -544,32 +548,41 @@
       Object.values(zones).forEach(z => z.classList.remove("active"));
     }
 
-    function renderList() {
+    function getInitials(nombre) {
+      const palabras = nombre.split(" ");
+      if (palabras.length === 1) {
+        return palabras[0].substring(0, 2).toUpperCase();
+      }
+      const primera = palabras[0].replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9]/g, "");
+      const segunda = palabras[1].replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9]/g, "");
+      return (primera.charAt(0) + (segunda.charAt(0) || "")).toUpperCase();
+    }
+
+    function renderGrid() {
       metabolitos.forEach((m, index) => {
-        const li = document.createElement("li");
-        li.className = "metabolite-item";
-        li.dataset.index = index;
+        const icon = document.createElement("div");
+        icon.className = "metabolite-icon";
+        icon.dataset.index = index;
+        icon.setAttribute("data-name", m.nombre);
 
         const chip = document.createElement("span");
         chip.className = "chip " + m.categoriaColor;
 
-        const text = document.createElement("div");
-        text.innerHTML = `
-          <div>${m.nombre}</div>
-          <div class="category-label">${m.categoria}</div>
-        `;
+        const initials = document.createElement("span");
+        initials.className = "metabolite-initials";
+        initials.textContent = getInitials(m.nombre);
 
-        li.appendChild(chip);
-        li.appendChild(text);
+        icon.appendChild(chip);
+        icon.appendChild(initials);
 
-        li.addEventListener("click", () => {
+        icon.addEventListener("click", () => {
           if (activeItem) activeItem.classList.remove("active");
-          li.classList.add("active");
-          activeItem = li;
+          icon.classList.add("active");
+          activeItem = icon;
           showMetabolite(index);
         });
 
-        listEl.appendChild(li);
+        gridEl.appendChild(icon);
       });
     }
 
@@ -587,8 +600,8 @@
       }
     }
 
-    // Inicializa la lista
-    renderList();
+    // Inicializa la cuadrícula de iconos
+    renderGrid();
   </script>
 </body>
 </html>
