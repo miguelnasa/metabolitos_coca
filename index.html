@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Metabolitos y efectos en el cuerpo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #f4f5f7;
+      color: #222;
+    }
+
+    .app {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Columna izquierda: lista de metabolitos */
+    .sidebar {
+      width: 30%;
+      min-width: 260px;
+      background: #ffffff;
+      border-right: 1px solid #ddd;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .sidebar h1 {
+      font-size: 1.2rem;
+      margin: 0 0 12px;
+    }
+
+    .sidebar p {
+      font-size: 0.9rem;
+      margin: 0 0 12px;
+      color: #555;
+    }
+
+    .metabolite-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .metabolite-item {
+      padding: 8px 10px;
+      margin-bottom: 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      transition: background 0.15s, transform 0.05s;
+    }
+
+    .metabolite-item:hover {
+      background: #f0f3ff;
+      transform: translateX(2px);
+    }
+
+    .metabolite-item.active {
+      background: #dde4ff;
+      font-weight: 600;
+    }
+
+    .chip {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Colores por categoría */
+    .cat-beneficio { background: #2eae5c; }    /* posible actividad farmacológica */
+    .cat-farma     { background: #f29f3d; }    /* actividad farmacológica clara */
+    .cat-toxico    { background: #e55252; }    /* tóxico */
+    .cat-extra     { background: #9ea4b3; }    /* contaminante, marcador, uso industrial */
+
+    .category-label {
+      font-size: 0.75rem;
+      opacity: 0.8;
+    }
+
+    /* Panel derecho: cuerpo y efecto */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 16px 20px;
+    }
+
+    .header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .header-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .header-subtitle {
+      font-size: 0.85rem;
+      color: #666;
+    }
+
+    .legend {
+      display: flex;
+      gap: 10px;
+      font-size: 0.75rem;
+      color: #555;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .content {
+      flex: 1;
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Silueta del cuerpo (simple, con CSS) */
+    .body-container {
+      position: relative;
+      width: 260px;
+      height: 420px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .body-silhouette {
+      position: relative;
+      width: 110px;
+      height: 260px;
+      background: #e8ecf5;
+      border-radius: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 30px;
+    }
+
+    .body-head {
+      position: absolute;
+      top: -60px;
+      width: 70px;
+      height: 70px;
+      background: #e8ecf5;
+      border-radius: 50%;
+    }
+
+    .body-arm {
+      position: absolute;
+      top: 70px;
+      width: 40px;
+      height: 90px;
+      background: #e8ecf5;
+      border-radius: 50px;
+    }
+
+    .body-arm.left {
+      left: -35px;
+    }
+
+    .body-arm.right {
+      right: -35px;
+    }
+
+    .body-leg {
+      position: absolute;
+      bottom: -80px;
+      width: 36px;
+      height: 80px;
+      background: #e8ecf5;
+      border-radius: 50px;
+    }
+
+    .body-leg.left {
+      left: 10px;
+    }
+
+    .body-leg.right {
+      right: 10px;
+    }
+
+    /* Zonas anatómicas (para destacar según el efecto) */
+    .zone {
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      pointer-events: none;
+    }
+
+    .zone-head    { top: -45px; left: 50%; transform: translateX(-50%); width: 65px; height: 65px; }
+    .zone-heart   { top: 65px; left: 50%; transform: translateX(-50%); width: 40px; height: 40px; }
+    .zone-liver   { top: 120px; left: 58%; width: 45px; height: 40px; }
+    .zone-torso   { top: 90px; left: 50%; transform: translateX(-50%); width: 75px; height: 80px; }
+    .zone-abdomen { top: 150px; left: 50%; transform: translateX(-50%); width: 60px; height: 60px; }
+    .zone-chest   { top: 110px; left: 50%; transform: translateX(-50%); width: 70px; height: 60px; }
+
+    .zone.active {
+      border-color: #4f46e5;
+      box-shadow: 0 0 12px rgba(79,70,229,0.55);
+    }
+
+    /* Panel de texto del efecto */
+    .effect-panel {
+      max-width: 420px;
+      padding: 16px 18px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    .effect-name {
+      font-weight: 600;
+      margin-bottom: 4px;
+      font-size: 1rem;
+    }
+
+    .effect-category {
+      font-size: 0.8rem;
+      margin-bottom: 8px;
+      color: #555;
+    }
+
+    .effect-text {
+      font-size: 0.9rem;
+      line-height: 1.4;
+      color: #333;
+    }
+
+    .effect-hint {
+      font-size: 0.75rem;
+      margin-top: 10px;
+      color: #777;
+    }
+
+    @media (max-width: 800px) {
+      .app {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: 45vh;
+      }
+      .main {
+        height: 55vh;
+      }
+      .content {
+        flex-direction: row;
+        gap: 12px;
+      }
+      .body-container {
+        transform: scale(0.85);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Columna izquierda -->
+    <aside class="sidebar">
+      <h1>Metabolitos</h1>
+      <p>Haz clic sobre un metabolito para ver dónde actúa y qué efecto tiene en el cuerpo.</p>
+      <ul id="metaboliteList" class="metabolite-list"></ul>
+    </aside>
+
+    <!-- Panel derecho -->
+    <main class="main">
+      <div class="header">
+        <div>
+          <div class="header-title">Efecto en el cuerpo</div>
+          <div class="header-subtitle">Visualización simplificada con zonas anatómicas</div>
+        </div>
+        <div class="legend">
+          <div class="legend-item">
+            <span class="chip cat-farma"></span><span>Actividad farmacológica</span>
+          </div>
+          <div class="legend-item">
+            <span class="chip cat-beneficio"></span><span>Posible beneficio</span>
+          </div>
+          <div class="legend-item">
+            <span class="chip cat-toxico"></span><span>Tóxico / Riesgo alto</span>
+          </div>
+          <div class="legend-item">
+            <span class="chip cat-extra"></span><span>Contaminante / Marcador</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <!-- Cuerpo -->
+        <div class="body-container">
+          <div class="body-silhouette">
+            <div class="body-head"></div>
+            <div class="body-arm left"></div>
+            <div class="body-arm right"></div>
+            <div class="body-leg left"></div>
+            <div class="body-leg right"></div>
+          </div>
+
+          <!-- Zonas anatómicas -->
+          <div id="zone-head" class="zone zone-head"></div>
+          <div id="zone-heart" class="zone zone-heart"></div>
+          <div id="zone-liver" class="zone zone-liver"></div>
+          <div id="zone-torso" class="zone zone-torso"></div>
+          <div id="zone-abdomen" class="zone zone-abdomen"></div>
+          <div id="zone-chest" class="zone zone-chest"></div>
+        </div>
+
+        <!-- Panel de texto -->
+        <section class="effect-panel">
+          <div id="effectName" class="effect-name">
+            Selecciona un metabolito
+          </div>
+          <div id="effectCategory" class="effect-category">
+            Categoría: —
+          </div>
+          <div id="effectText" class="effect-text">
+            En la columna izquierda tienes la lista completa de metabolitos. Al hacer clic en uno, verás aquí su efecto principal explicado en lenguaje sencillo y se resaltará la zona del cuerpo relacionada.
+          </div>
+          <div class="effect-hint">
+            Esta visualización es simplificada y no sustituye información clínica detallada.
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Datos de metabolitos (simplificados y en español llano).[file:1]
+    const metabolitos = [
+      {
+        nombre: "Cocaína",
+        categoria: "Compuesto con actividad farmacológica",
+        efecto: "Estimula con fuerza el sistema nervioso, genera ansiedad, aumenta la frecuencia cardíaca y puede provocar arritmias. También actúa como anestésico local.",
+        categoriaColor: "cat-farma",
+        zonas: ["head", "heart"]
+      },
+      {
+        nombre: "Coumarin",
+        categoria: "Compuesto con actividad farmacológica",
+        efecto: "Actúa como anticoagulante, haciendo que la sangre forme coágulos con menor facilidad.",
+        categoriaColor: "cat-farma",
+        zonas: ["heart"]
+      },
+      {
+        nombre: "Ácido clorogénico",
+        categoria: "Compuesto con posible actividad farmacológica",
+        efecto: "Se considera un antioxidante, ayuda a proteger las células del daño oxidativo.",
+        categoriaColor: "cat-beneficio",
+        zonas: ["torso"]
+      },
+      {
+        nombre: "Anisodina",
+        categoria: "Compuesto con posible actividad farmacológica",
+        efecto: "Puede mejorar la circulación sanguínea.",
+        categoriaColor: "cat-beneficio",
+        zonas: ["heart"]
+      },
+      {
+        nombre: "Celastrol",
+        categoria: "Compuesto con posible actividad farmacológica",
+        efecto: "Se ha descrito como antiinflamatorio y antioxidante, con posibles efectos antitumorales.",
+        categoriaColor: "cat-beneficio",
+        zonas: ["torso"]
+      },
+      {
+        nombre: "Convolamina",
+        categoria: "Compuesto con posible actividad farmacológica",
+        efecto: "Se asocia a un efecto antiinflamatorio.",
+        categoriaColor: "cat-beneficio",
+        zonas: ["torso"]
+      },
+      {
+        nombre: "Costunolida",
+        categoria: "Compuesto con posible actividad farmacológica",
+        efecto: "Tiene propiedades antiinflamatorias y antioxidantes, con posible efecto antitumoral y antifúngico.",
+        categoriaColor: "cat-beneficio",
+        zonas: ["torso"]
+      },
+      {
+        nombre: "Darutigenol",
+        categoria: "Compuesto con posible actividad farmacológica",
+        efecto: "Actúa como antitrombótico, puede disminuir la formación de trombos en la sangre.",
+        categoriaColor: "cat-beneficio",
+        zonas: ["heart"]
+      },
+      {
+        nombre: "Himbacina",
+        categoria: "Compuesto con posible actividad farmacológica",
+        efecto: "Se ha relacionado con mejora en la memoria y la función cognitiva.",
+        categoriaColor: "cat-beneficio",
+        zonas: ["head"]
+      },
+      {
+        nombre: "Luteolina-4'-O-glucósido",
+        categoria: "Compuesto con posible actividad farmacológica",
+        efecto: "Se considera antiinflamatorio y antioxidante.",
+        categoriaColor: "cat-beneficio",
+        zonas: ["torso"]
+      },
+      {
+        nombre: "Palmatina",
+        categoria: "Compuesto con posible actividad farmacológica",
+        efecto: "Se describe como antidepresivo, antioxidante y con posible efecto protector sobre el hígado.",
+        categoriaColor: "cat-beneficio",
+        zonas: ["liver", "head"]
+      },
+      {
+        nombre: "Pterosin A",
+        categoria: "Compuesto con posible actividad farmacológica",
+        efecto: "Puede ayudar a reducir la glucosa sanguínea, con posible efecto antidiabético.",
+        categoriaColor: "cat-beneficio",
+        zonas: ["abdomen"]
+      },
+      {
+        nombre: "Rutina",
+        categoria: "Compuesto con posible actividad farmacológica",
+        efecto: "Se considera antiinflamatoria y antioxidante.",
+        categoriaColor: "cat-beneficio",
+        zonas: ["torso"]
+      },
+      {
+        nombre: "Spegatrina",
+        categoria: "Compuesto con posible actividad farmacológica",
+        efecto: "Puede bajar la presión arterial al dilatar las arterias.",
+        categoriaColor: "cat-beneficio",
+        zonas: ["heart"]
+      },
+      {
+        nombre: "Tricina",
+        categoria: "Compuesto con posible actividad farmacológica",
+        efecto: "Se relaciona con efectos antiinflamatorios.",
+        categoriaColor: "cat-beneficio",
+        zonas: ["torso"]
+      },
+      {
+        nombre: "Tuberostemonina",
+        categoria: "Compuesto con posible actividad farmacológica",
+        efecto: "Se utiliza para calmar la tos persistente.",
+        categoriaColor: "cat-beneficio",
+        zonas: ["chest"]
+      },
+      {
+        nombre: "Quercetina 3-galactósido",
+        categoria: "Compuesto con posible actividad farmacológica",
+        efecto: "Se considera un antioxidante.",
+        categoriaColor: "cat-beneficio",
+        zonas: ["torso"]
+      },
+      {
+        nombre: "Tetrahidroxiflavona",
+        categoria: "Compuesto con posible actividad farmacológica",
+        efecto: "Tiene propiedades antiinflamatorias y antioxidantes, con posible efecto antitumoral.",
+        categoriaColor: "cat-beneficio",
+        zonas: ["torso"]
+      },
+      {
+        nombre: "Umbeliferona",
+        categoria: "Compuesto con posible actividad farmacológica",
+        efecto: "Se asocia a efectos antiinflamatorios, antioxidantes y antitumorales.",
+        categoriaColor: "cat-beneficio",
+        zonas: ["torso"]
+      },
+      {
+        nombre: "Retrorsina",
+        categoria: "Compuesto TÓXICO",
+        efecto: "Puede dañar las células del hígado y alterar el ADN.",
+        categoriaColor: "cat-toxico",
+        zonas: ["liver"]
+      },
+      {
+        nombre: "Veratramine",
+        categoria: "Compuesto TÓXICO",
+        efecto: "Puede causar daño en el corazón y en el sistema nervioso central.",
+        categoriaColor: "cat-toxico",
+        zonas: ["heart", "head"]
+      },
+      {
+        nombre: "Napropamida",
+        categoria: "Contaminante",
+        efecto: "Herbicida artificial que actúa como contaminante en el entorno.",
+        categoriaColor: "cat-extra",
+        zonas: []
+      },
+      {
+        nombre: "Benzoilecgonina",
+        categoria: "Marcador de consumo",
+        efecto: "Es un rastro biológico del consumo de cocaína y se detecta en pruebas de laboratorio.",
+        categoriaColor: "cat-extra",
+        zonas: []
+      },
+      {
+        nombre: "Oxicodona",
+        categoria: "Posible contaminante (no se encuentra en plantas)",
+        efecto: "Es un analgésico opioide sintético que actúa sobre el sistema nervioso central.",
+        categoriaColor: "cat-extra",
+        zonas: ["head"]
+      },
+      {
+        nombre: "Tropinona",
+        categoria: "Uso en industria",
+        efecto: "Se utiliza como precursor en la síntesis de atropina, un medicamento empleado en reanimación.",
+        categoriaColor: "cat-extra",
+        zonas: []
+      }
+    ];
+
+    const listEl = document.getElementById("metaboliteList");
+    const effectNameEl = document.getElementById("effectName");
+    const effectCategoryEl = document.getElementById("effectCategory");
+    const effectTextEl = document.getElementById("effectText");
+
+    const zones = {
+      head: document.getElementById("zone-head"),
+      heart: document.getElementById("zone-heart"),
+      liver: document.getElementById("zone-liver"),
+      torso: document.getElementById("zone-torso"),
+      abdomen: document.getElementById("zone-abdomen"),
+      chest: document.getElementById("zone-chest")
+    };
+
+    let activeItem = null;
+
+    function clearZones() {
+      Object.values(zones).forEach(z => z.classList.remove("active"));
+    }
+
+    function renderList() {
+      metabolitos.forEach((m, index) => {
+        const li = document.createElement("li");
+        li.className = "metabolite-item";
+        li.dataset.index = index;
+
+        const chip = document.createElement("span");
+        chip.className = "chip " + m.categoriaColor;
+
+        const text = document.createElement("div");
+        text.innerHTML = `
+          <div>${m.nombre}</div>
+          <div class="category-label">${m.categoria}</div>
+        `;
+
+        li.appendChild(chip);
+        li.appendChild(text);
+
+        li.addEventListener("click", () => {
+          if (activeItem) activeItem.classList.remove("active");
+          li.classList.add("active");
+          activeItem = li;
+          showMetabolite(index);
+        });
+
+        listEl.appendChild(li);
+      });
+    }
+
+    function showMetabolite(index) {
+      const m = metabolitos[index];
+      effectNameEl.textContent = m.nombre;
+      effectCategoryEl.textContent = "Categoría: " + m.categoria;
+      effectTextEl.textContent = m.efecto;
+
+      clearZones();
+      if (m.zonas && m.zonas.length > 0) {
+        m.zonas.forEach(z => {
+          if (zones[z]) zones[z].classList.add("active");
+        });
+      }
+    }
+
+    // Inicializa la lista
+    renderList();
+  </script>
+</body>
+</html>
